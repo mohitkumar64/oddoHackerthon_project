@@ -18,6 +18,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { ScrollReveal } from "@/components/scroll-reveal";
 
 interface Driver {
   _id: string;
@@ -177,61 +178,63 @@ export default function SafetyDashboard() {
       </div>
 
       {/* KPI Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
-              <span>Avg Safety Score</span>
-              <Award className="size-4 text-emerald-500" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold font-mono">{avgSafetyScore}/100</div>
-            <p className="text-[10px] text-muted-foreground mt-1">Target benchmark: &gt; 85</p>
-          </CardContent>
-        </Card>
+      <ScrollReveal yOffset={10}>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+                <span>Avg Safety Score</span>
+                <Award className="size-4 text-emerald-500" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold font-mono">{avgSafetyScore}/100</div>
+              <p className="text-[10px] text-muted-foreground mt-1">Target benchmark: &gt; 85</p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
-              <span>Expired Licenses</span>
-              <AlertTriangle className="size-4 text-red-500" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold font-mono ${expiredLicenses.length > 0 ? "text-red-500" : "text-foreground"}`}>
-              {expiredLicenses.length}
-            </div>
-            <p className="text-[10px] text-muted-foreground mt-1">Requires immediate suspension</p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+                <span>Expired Licenses</span>
+                <AlertTriangle className="size-4 text-red-500" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold font-mono ${expiredLicenses.length > 0 ? "text-red-500" : "text-foreground"}`}>
+                {expiredLicenses.length}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">Requires immediate suspension</p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
-              <span>Suspended Drivers</span>
-              <UserX className="size-4 text-amber-500" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold font-mono">{suspendedDrivers.length}</div>
-            <p className="text-[10px] text-muted-foreground mt-1">Locked from trip dispatch</p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+                <span>Suspended Drivers</span>
+                <UserX className="size-4 text-amber-500" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold font-mono">{suspendedDrivers.length}</div>
+              <p className="text-[10px] text-muted-foreground mt-1">Locked from trip dispatch</p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
-              <span>Active Work Orders</span>
-              <Wrench className="size-4 text-blue-500" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold font-mono">{maintLogs.length}</div>
-            <p className="text-[10px] text-muted-foreground mt-1">Vehicles currently In Shop</p>
-          </CardContent>
-        </Card>
-      </div>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+                <span>Active Work Orders</span>
+                <Wrench className="size-4 text-blue-500" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold font-mono">{maintLogs.length}</div>
+              <p className="text-[10px] text-muted-foreground mt-1">Vehicles currently In Shop</p>
+            </CardContent>
+          </Card>
+        </div>
+      </ScrollReveal>
 
       {/* Tabs Layout */}
       <div className="border-b border-border">
@@ -273,7 +276,7 @@ export default function SafetyDashboard() {
       <Card className="border-none shadow-none">
         <CardContent className="p-0">
           {activeTab === "licenses" && (
-            <div className="space-y-4">
+            <ScrollReveal className="space-y-4">
               {expiredLicenses.length > 0 && (
                 <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-4 flex gap-3 text-xs text-red-600 dark:text-red-400">
                   <ShieldAlert className="size-4 shrink-0 mt-0.5" />
@@ -341,11 +344,11 @@ export default function SafetyDashboard() {
                   })}
                 </TableBody>
               </Table>
-            </div>
+            </ScrollReveal>
           )}
 
           {activeTab === "scores" && (
-            <div className="space-y-4">
+            <ScrollReveal className="space-y-4">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -431,11 +434,11 @@ export default function SafetyDashboard() {
                     })}
                 </TableBody>
               </Table>
-            </div>
+            </ScrollReveal>
           )}
 
           {activeTab === "maintenance" && (
-            <div className="space-y-4">
+            <ScrollReveal className="space-y-4">
               {maintLogs.length === 0 ? (
                 <div className="rounded-xl border border-border p-8 text-center text-xs">
                   <CheckCircle2 className="size-8 text-emerald-500 mx-auto mb-2" />
@@ -472,7 +475,7 @@ export default function SafetyDashboard() {
                   </TableBody>
                 </Table>
               )}
-            </div>
+            </ScrollReveal>
           )}
         </CardContent>
       </Card>

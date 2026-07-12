@@ -47,15 +47,15 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 
-  --font-size-xs: 16px;
-  --font-size-sm: 18px;
-  --font-size-base: 20px;
-  --font-size-lg: 22px;
-  --font-size-xl: 24px;
-  --font-size-2xl: 28px;
-  --font-size-3xl: 34px;
-  --font-size-4xl: 40px;
-  --font-size-5xl: 52px;
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+  --font-size-4xl: 36px;
+  --font-size-5xl: 48px;
 }
 
 :root {
@@ -132,9 +132,48 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground text-base font-medium leading-relaxed tracking-normal;
+    @apply bg-background text-foreground text-base font-normal leading-relaxed tracking-normal;
   }
   html {
     @apply font-sans;
   }
+  /* Minimal premium scrollbars */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: oklch(0.708 0 0 / 20%);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.708 0 0 / 40%);
+  }
+}
+
+@utility transition-soft {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@utility hover-lift {
+  @apply transition-transform duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98];
+}
+
+@utility glow-card {
+  box-shadow: 0 4px 20px oklch(0.488 0.243 264.376 / 5%);
+  border-color: oklch(0.488 0.243 264.376 / 15%) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    box-shadow: 0 4px 25px oklch(0.488 0.243 264.376 / 10%);
+    border-color: oklch(0.488 0.243 264.376 / 25%) !important;
+    transform: translateY(-2px);
+  }
+}
+
+@utility animate-spin-slow {
+  animation: spin 12s linear infinite;
 }

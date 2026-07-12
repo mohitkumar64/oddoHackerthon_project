@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { 
   Truck, 
   Users, 
@@ -25,6 +26,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { GPSMap } from "@/components/gps-map";
 import { LiveFleetMap } from "@/components/live-fleet-map";
+import { ScrollReveal } from "@/components/scroll-reveal";
 import { INDIAN_ROUTES } from "@/lib/routes-data";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 
@@ -616,38 +618,40 @@ export default function FleetManagerDashboard() {
       </div>
 
       {/* 2. Top-level KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-        <Card className="p-4 flex flex-col justify-between">
-          <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Fleet Utilization</span>
-          <span className="text-xl font-bold font-mono mt-2 text-foreground">{fleetUtilization}%</span>
-        </Card>
-        <Card className="p-4 flex flex-col justify-between">
-          <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Active Trips</span>
-          <span className="text-xl font-bold font-mono mt-2 text-emerald-500">{activeTripsCount}</span>
-        </Card>
-        <Card className="p-4 flex flex-col justify-between">
-          <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Available Trucks</span>
-          <span className="text-xl font-bold font-mono mt-2 text-blue-500">{availableVehicles}</span>
-        </Card>
-        <Card className="p-4 flex flex-col justify-between">
-          <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">In Maintenance</span>
-          <span className="text-xl font-bold font-mono mt-2 text-amber-500">{inShopVehicles}</span>
-        </Card>
-        <Card className="p-4 flex flex-col justify-between">
-          <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Pending Orders</span>
-          <span className="text-xl font-bold font-mono mt-2 text-foreground">{pendingTripsCount}</span>
-        </Card>
-        <Card className="p-4 flex flex-col justify-between">
-          <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Drivers on Duty</span>
-          <span className="text-xl font-bold font-mono mt-2 text-foreground">{driversOnDuty}</span>
-        </Card>
-      </div>
+      <ScrollReveal yOffset={10}>
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+          <Card className="p-4 flex flex-col justify-between">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Fleet Utilization</span>
+            <span className="text-xl font-bold font-mono mt-2 text-foreground">{fleetUtilization}%</span>
+          </Card>
+          <Card className="p-4 flex flex-col justify-between">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Active Trips</span>
+            <span className="text-xl font-bold font-mono mt-2 text-emerald-500">{activeTripsCount}</span>
+          </Card>
+          <Card className="p-4 flex flex-col justify-between">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Available Trucks</span>
+            <span className="text-xl font-bold font-mono mt-2 text-blue-500">{availableVehicles}</span>
+          </Card>
+          <Card className="p-4 flex flex-col justify-between">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">In Maintenance</span>
+            <span className="text-xl font-bold font-mono mt-2 text-amber-500">{inShopVehicles}</span>
+          </Card>
+          <Card className="p-4 flex flex-col justify-between">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Pending Orders</span>
+            <span className="text-xl font-bold font-mono mt-2 text-foreground">{pendingTripsCount}</span>
+          </Card>
+          <Card className="p-4 flex flex-col justify-between">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Drivers on Duty</span>
+            <span className="text-xl font-bold font-mono mt-2 text-foreground">{driversOnDuty}</span>
+          </Card>
+        </div>
+      </ScrollReveal>
 
       {/* 3. Tab Contents */}
 
       {/* TAB: VEHICLES */}
       {activeTab === "vehicles" && (
-        <div className="space-y-6">
+        <ScrollReveal className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">Active Vehicle Fleet</h2>
             <button
@@ -779,34 +783,35 @@ export default function FleetManagerDashboard() {
                 </TableHeader>
                 <TableBody>
                   {vehicles.map((v) => (
-                    <TableRow key={v._id}>
-                      <TableCell className="font-mono text-xs py-3 font-semibold text-foreground">{v.registrationNumber}</TableCell>
+                    <TableRow key={v._id} className="group transition-soft hover:bg-muted/50">
+                      <TableCell className="font-mono text-xs py-4 font-semibold text-foreground group-hover:text-primary transition-colors">{v.registrationNumber}</TableCell>
                       <TableCell className="text-xs font-semibold">{v.name}</TableCell>
                       <TableCell className="text-xs">
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                        <Badge variant="outline" className="text-[10px] px-2 py-0.5 rounded-md font-bold tracking-tight">
                           {v.type}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-xs font-mono">{v.maxLoadCapacity} kg</TableCell>
                       <TableCell className="text-xs font-mono">{v.odometer.toLocaleString()} km</TableCell>
                       <TableCell className="text-xs">{v.region}</TableCell>
-                      <TableCell className="text-xs py-3">
+                      <TableCell className="text-xs py-4">
                         <Badge variant={
                           v.status === "AVAILABLE" ? "secondary" : 
                           v.status === "ON_TRIP" ? "default" : 
                           v.status === "IN_SHOP" ? "destructive" : "outline"
-                        } className={
-                          v.status === "AVAILABLE" ? "bg-blue-500/10 text-blue-500 border-transparent" : 
-                          v.status === "ON_TRIP" ? "bg-emerald-500/10 text-emerald-500 border-transparent" : 
-                          v.status === "IN_SHOP" ? "bg-amber-500/10 text-amber-500 border-transparent" : ""
-                        }>
+                        } className={cn(
+                          "px-2 py-0.5 rounded-md text-[10px] font-bold tracking-tight",
+                          v.status === "AVAILABLE" ? "bg-blue-500/5 text-blue-500 border-blue-500/10" : 
+                          v.status === "ON_TRIP" ? "bg-emerald-500/5 text-emerald-500 border-emerald-500/10" : 
+                          v.status === "IN_SHOP" ? "bg-amber-500/5 text-amber-500 border-amber-500/10" : ""
+                        )}>
                           {v.status.replace("_", " ")}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right py-3">
+                      <TableCell className="text-right py-4">
                         <button
                           onClick={() => handleViewVehicleDetails(v._id)}
-                          className="p-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md"
+                          className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-soft"
                         >
                           <ChevronRight className="size-4" />
                         </button>
@@ -897,12 +902,12 @@ export default function FleetManagerDashboard() {
               </div>
             </Card>
           )}
-        </div>
+        </ScrollReveal>
       )}
 
       {/* TAB: DRIVERS */}
       {activeTab === "drivers" && (
-        <div className="space-y-6">
+        <ScrollReveal className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">Driver Fleet Roster</h2>
             <button
@@ -1043,12 +1048,12 @@ export default function FleetManagerDashboard() {
               </Table>
             </CardContent>
           </Card>
-        </div>
+        </ScrollReveal>
       )}
 
       {/* TAB: TRIPS */}
       {activeTab === "trips" && (
-        <div className="space-y-6">
+        <ScrollReveal className="space-y-6">
 
           <div className="flex justify-between items-center">
             <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">Trip Dispatches Registry</h2>
@@ -1363,12 +1368,12 @@ export default function FleetManagerDashboard() {
               </Table>
             </CardContent>
           </Card>
-        </div>
+        </ScrollReveal>
       )}
 
       {/* TAB: MAINTENANCE */}
       {activeTab === "maintenance" && (
-        <div className="space-y-6">
+        <ScrollReveal className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">Vehicle Maintenance Workshops</h2>
             <button
@@ -1524,12 +1529,12 @@ export default function FleetManagerDashboard() {
               </Table>
             </CardContent>
           </Card>
-        </div>
+        </ScrollReveal>
       )}
 
       {/* TAB: ANALYTICS */}
       {activeTab === "expenses" && (
-        <div className="space-y-6">
+        <ScrollReveal className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">Financial Analytics & Expense Sheets</h2>
             <div className="flex gap-2">
@@ -1619,11 +1624,11 @@ export default function FleetManagerDashboard() {
           )}
 
           {/* Recharts Graphical Dashboard Panel */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Chart 1: ROI Leaderboard */}
-            <Card className="border border-border bg-card p-4">
-              <CardHeader className="p-0 pb-3">
-                <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Vehicle Lifetime ROI (%)</CardTitle>
+            <Card className="border border-border bg-card p-6 shadow-sm hover:shadow-md transition-soft">
+              <CardHeader className="p-0 pb-4">
+                <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Vehicle Lifetime ROI (%)</CardTitle>
                 <CardDescription className="text-[10px] text-muted-foreground">ROI calculated using (Trip Revenue - Cumulative Expenses) / Vehicle Acquisition Cost</CardDescription>
               </CardHeader>
               <CardContent className="h-64 p-0">
@@ -1632,12 +1637,12 @@ export default function FleetManagerDashboard() {
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={vehiclesRoiData} layout="vertical" margin={{ left: 10, right: 10, top: 10, bottom: 10 }}>
-                      <XAxis type="number" stroke="#888888" fontSize={10} tickLine={false} axisLine={false} />
-                      <YAxis dataKey="regNumber" type="category" stroke="#888888" fontSize={10} tickLine={false} axisLine={false} />
-                      <Tooltip formatter={(value) => [`${value}%`, "ROI"]} contentStyle={{ fontSize: "11px", borderRadius: "8px" }} />
-                      <Bar dataKey="roi" radius={[0, 4, 4, 0]}>
+                      <XAxis type="number" stroke="var(--color-muted-foreground)" fontSize={10} tickLine={false} axisLine={false} />
+                      <YAxis dataKey="regNumber" type="category" stroke="var(--color-muted-foreground)" fontSize={10} tickLine={false} axisLine={false} />
+                      <Tooltip cursor={{ fill: "var(--color-muted)", opacity: 0.1 }} formatter={(value) => [`${value}%`, "ROI"]} contentStyle={{ fontSize: "11px", borderRadius: "12px", backgroundColor: "var(--color-popover)", border: "1px solid var(--color-border)", backdropFilter: "blur(8px)" }} />
+                      <Bar dataKey="roi" radius={[0, 4, 4, 0]} barSize={20}>
                         {vehiclesRoiData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.roi >= 0 ? "#10b981" : "#ef4444"} />
+                          <Cell key={`cell-${index}`} fill={entry.roi >= 0 ? "var(--color-primary)" : "var(--color-destructive)"} />
                         ))}
                       </Bar>
                     </BarChart>
@@ -1647,9 +1652,9 @@ export default function FleetManagerDashboard() {
             </Card>
 
             {/* Chart 2: Cost Breakdown */}
-            <Card className="border border-border bg-card p-4">
-              <CardHeader className="p-0 pb-3">
-                <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Operational Spend Segmentation</CardTitle>
+            <Card className="border border-border bg-card p-6 shadow-sm hover:shadow-md transition-soft">
+              <CardHeader className="p-0 pb-4">
+                <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total Operational Spend Segmentation</CardTitle>
                 <CardDescription className="text-[10px] text-muted-foreground">Visual breakdown of fuel logs, maintenance, and toll charges</CardDescription>
               </CardHeader>
               <CardContent className="h-64 p-0 flex items-center justify-center">
@@ -1664,16 +1669,17 @@ export default function FleetManagerDashboard() {
                         nameKey="name"
                         cx="50%"
                         cy="50%"
-                        outerRadius={70}
-                        innerRadius={40}
-                        paddingAngle={4}
+                        outerRadius={80}
+                        innerRadius={55}
+                        paddingAngle={8}
+                        stroke="none"
                       >
                         {expensesPieData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value) => [`$${value}`, "Cost"]} contentStyle={{ fontSize: "11px", borderRadius: "8px" }} />
-                      <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: "10px" }} />
+                      <Tooltip formatter={(value) => [`$${value}`, "Cost"]} contentStyle={{ fontSize: "11px", borderRadius: "12px", backgroundColor: "var(--color-popover)", border: "1px solid var(--color-border)", backdropFilter: "blur(8px)" }} />
+                      <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: "10px", paddingTop: "20px" }} />
                     </PieChart>
                   </ResponsiveContainer>
                 )}
@@ -1721,13 +1727,13 @@ export default function FleetManagerDashboard() {
               </Table>
             </CardContent>
           </Card>
-        </div>
+        </ScrollReveal>
       )}
 
       {activeTab === "live-map" && (
-        <div className="space-y-6">
+        <ScrollReveal className="space-y-6">
           <LiveFleetMap />
-        </div>
+        </ScrollReveal>
       )}
     </div>
   );

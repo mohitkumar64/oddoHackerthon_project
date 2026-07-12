@@ -4,6 +4,7 @@ import React, { useEffect, useState, Suspense } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Toaster } from "@/components/ui/sonner";
 import { DemoSwitcher } from "@/components/demo-switcher";
+import { ScrollProgressBar } from "@/components/scroll-progress";
 import {
   Truck,
   Users,
@@ -161,6 +162,7 @@ function DashboardLayoutContent({
 
   return (
     <div className="flex min-h-screen bg-muted/30 font-sans text-base">
+      <ScrollProgressBar />
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-border bg-card">
         {/* Brand */}
@@ -171,7 +173,7 @@ function DashboardLayoutContent({
         </div>
 
         {/* Sidebar Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
+        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
           {filteredNav.map((item) => {
             const hasQuery = item.href.includes("?");
             const isActive = hasQuery
@@ -181,14 +183,17 @@ function DashboardLayoutContent({
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                className={`group relative flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-xl transition-soft ${
                   isActive
-                    ? "bg-primary text-primary-foreground font-semibold"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground hover:pl-4"
                 }`}
               >
-                <item.icon className="size-4.5" />
-                <span>{item.name}</span>
+                {isActive && (
+                  <span className="absolute left-0 top-1/4 h-1/2 w-1 bg-primary-foreground rounded-r-full animate-in fade-in slide-in-from-left-2 duration-300" />
+                )}
+                <item.icon className={`size-4.5 transition-soft ${isActive ? "scale-110" : "group-hover:scale-110"}`} />
+                <span className="relative z-10">{item.name}</span>
               </Link>
             );
           })}
@@ -294,7 +299,7 @@ function DashboardLayoutContent({
         )}
 
         {/* Dynamic Page Content */}
-        <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto animate-in fade-in duration-300">
+        <main className="flex-1 p-8 md:p-10 max-w-7xl w-full mx-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
           <Suspense fallback={
             <div className="flex h-[30vh] items-center justify-center">
               <span className="text-sm text-muted-foreground">Loading workspace view...</span>

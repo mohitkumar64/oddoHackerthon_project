@@ -14,6 +14,7 @@ import {
   FileText,
   Activity
 } from "lucide-react";
+import { ScrollReveal } from "@/components/scroll-reveal";
 
 interface Vehicle {
   _id: string;
@@ -235,7 +236,7 @@ export default function DriverDashboard() {
   const isExpired = new Date(driver.licenseExpiryDate) <= new Date();
 
   return (
-    <div className="max-w-md mx-auto space-y-6 font-sans select-none pb-12">
+    <ScrollReveal className="max-w-md mx-auto space-y-6 font-sans select-none pb-12">
       {/* 1. Roster Status Card */}
       <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
         <div className="flex items-center justify-between">
@@ -494,6 +495,6 @@ export default function DriverDashboard() {
           </p>
         </div>
       )}
-    </div>
+    </ScrollReveal>
   );
 }
