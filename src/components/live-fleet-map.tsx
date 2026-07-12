@@ -343,41 +343,69 @@ export function LiveFleetMap() {
 
     // Render static HQ Office pin
     const hqEl = document.createElement("div");
-    hqEl.className = "cursor-pointer flex items-center justify-center z-10";
+    hqEl.className = "cursor-pointer flex items-center justify-center z-1 relative";
     hqEl.innerHTML = `
       <div class="flex items-center justify-center bg-[#18181b] text-white dark:bg-[#ffffff] dark:text-black border border-border rounded px-2 py-0.5 shadow-md font-bold text-[9px] tracking-wider uppercase">
         🏢 HQ Office
       </div>
     `;
+    const hqPopup = new maplibregl.Popup({ offset: 10, closeButton: false }).setHTML(
+      `<div class="p-2.5 text-foreground bg-card text-xs space-y-1 rounded border border-border">
+        <strong class="text-xs">TransitOps Headquarters</strong>
+        <p class="text-muted-foreground text-[10px]">Central dispatcher office and main vehicle depot.</p>
+       </div>`
+    );
     const hqMarker = new maplibregl.Marker({ element: hqEl })
       .setLngLat([77.2167, 28.6304])
-      .setPopup(new maplibregl.Popup({ offset: 10, closeButton: false }).setHTML(
-        `<div class="p-2.5 text-foreground bg-card text-xs space-y-1 rounded border border-border">
-          <strong class="text-xs">TransitOps Headquarters</strong>
-          <p class="text-muted-foreground text-[10px]">Central dispatcher office and main vehicle depot.</p>
-         </div>`
-      ))
+      .setPopup(hqPopup)
       .addTo(map);
     markersRef.current["hq-office"] = { marker: hqMarker, data: null };
 
+    hqEl.addEventListener("mouseenter", () => {
+      hqEl.style.zIndex = "20";
+      if (!hqPopup.isOpen()) {
+        hqMarker.togglePopup();
+      }
+    });
+    hqEl.addEventListener("mouseleave", () => {
+      hqEl.style.zIndex = "1";
+      if (hqPopup.isOpen()) {
+        hqMarker.togglePopup();
+      }
+    });
+
     // Render static Workshop Yard pin
     const shopEl = document.createElement("div");
-    shopEl.className = "cursor-pointer flex items-center justify-center z-10";
+    shopEl.className = "cursor-pointer flex items-center justify-center z-1 relative";
     shopEl.innerHTML = `
       <div class="flex items-center justify-center bg-amber-600 text-white border border-border rounded px-2 py-0.5 shadow-md font-bold text-[9px] tracking-wider uppercase">
         🔧 Workshop
       </div>
     `;
+    const shopPopup = new maplibregl.Popup({ offset: 10, closeButton: false }).setHTML(
+      `<div class="p-2.5 text-foreground bg-card text-xs space-y-1 rounded border border-border">
+        <strong class="text-xs">Central Maintenance Yard</strong>
+        <p class="text-muted-foreground text-[10px]">Logistics maintenance bays, service yards, and vehicle repairs.</p>
+       </div>`
+    );
     const shopMarker = new maplibregl.Marker({ element: shopEl })
       .setLngLat([77.235, 28.615])
-      .setPopup(new maplibregl.Popup({ offset: 10, closeButton: false }).setHTML(
-        `<div class="p-2.5 text-foreground bg-card text-xs space-y-1 rounded border border-border">
-          <strong class="text-xs">Central Maintenance Yard</strong>
-          <p class="text-muted-foreground text-[10px]">Logistics maintenance bays, service yards, and vehicle repairs.</p>
-         </div>`
-      ))
+      .setPopup(shopPopup)
       .addTo(map);
     markersRef.current["central-workshop"] = { marker: shopMarker, data: null };
+
+    shopEl.addEventListener("mouseenter", () => {
+      shopEl.style.zIndex = "20";
+      if (!shopPopup.isOpen()) {
+        shopMarker.togglePopup();
+      }
+    });
+    shopEl.addEventListener("mouseleave", () => {
+      shopEl.style.zIndex = "1";
+      if (shopPopup.isOpen()) {
+        shopMarker.togglePopup();
+      }
+    });
 
     vehicles.forEach((vehicle, idx) => {
       const activeTrip = trips.find(t => matchesVehicle(t, vehicle._id) && t.status === "DISPATCHED");
@@ -392,7 +420,7 @@ export function LiveFleetMap() {
       const coords = routeCoordinates[route.id] || route.coordinates;
 
       const el = document.createElement("div");
-      el.className = "flex items-center justify-center cursor-pointer";
+      el.className = "flex items-center justify-center cursor-pointer z-10 hover:z-30 relative transition-all duration-150";
       
       if (vehicle.status === "ON_TRIP") {
         el.innerHTML = `
@@ -452,6 +480,20 @@ export function LiveFleetMap() {
         .addTo(map);
 
       markersRef.current[vehicle._id] = { marker, data: vehicle };
+
+      // Open popup on hover and raise z-index
+      el.addEventListener("mouseenter", () => {
+        el.style.zIndex = "40";
+        if (!popup.isOpen()) {
+          marker.togglePopup();
+        }
+      });
+      el.addEventListener("mouseleave", () => {
+        el.style.zIndex = "";
+        if (popup.isOpen()) {
+          marker.togglePopup();
+        }
+      });
 
       marker.getPopup().on("open", () => {
         const sim = simulationStateRef.current[vehicle._id];

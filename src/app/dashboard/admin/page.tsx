@@ -12,10 +12,20 @@ import {
   AlertTriangle,
   Unlock,
   ShieldCheck,
-  UserCog
+  UserCog,
+  Plus
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ScrollReveal } from "@/components/scroll-reveal";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 interface Vehicle {
   _id: string;
@@ -52,6 +62,15 @@ export default function AdminDashboard() {
   
   const [isUpdating, setIsUpdating] = useState(false);
   const [isUpdatingRole, setIsUpdatingRole] = useState<string | null>(null);
+
+  // New user form state
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserRole, setNewUserRole] = useState<"ADMIN" | "FLEET_MANAGER" | "SAFETY_OFFICER" | "DRIVER">("DRIVER");
+  const [newUserDriverId, setNewUserDriverId] = useState("");
+  const [isRegistering, setIsRegistering] = useState(false);
 
   const fetchAdminData = async () => {
     try {
@@ -184,6 +203,59 @@ export default function AdminDashboard() {
       toast.error("Network error updating role", { id: toastId });
     } finally {
       setIsUpdatingRole(null);
+    }
+  };
+
+  const handleRegisterUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUserName.trim() || !newUserEmail.trim() || !newUserPassword.trim()) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+    if (newUserPassword.length < 6) {
+      toast.error("Password must be at least 6 characters long.");
+      return;
+    }
+
+    setIsRegistering(true);
+    const toastId = toast.loading("Creating user account...");
+    try {
+      const payload: any = {
+        name: newUserName,
+        email: newUserEmail,
+        password: newUserPassword,
+        role: newUserRole,
+      };
+
+      if (newUserRole === "DRIVER" && newUserDriverId) {
+        payload.driverId = newUserDriverId;
+      }
+
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        toast.success("User account created successfully!", { id: toastId });
+        setNewUserName("");
+        setNewUserEmail("");
+        setNewUserPassword("");
+        setNewUserRole("DRIVER");
+        setNewUserDriverId("");
+        setIsCreateOpen(false);
+        fetchAdminData();
+      } else {
+        const data = await res.json();
+        toast.error(data.message || "Failed to create user account.", { id: toastId });
+      }
+    } catch {
+      toast.error("Network error creating user account.", { id: toastId });
+    } finally {
+      setIsRegistering(false);
     }
   };
 
@@ -367,14 +439,139 @@ export default function AdminDashboard() {
       {/* System Accounts Administration */}
       <ScrollReveal delay={0.25}>
         <Card className="border border-border bg-card">
-          <CardHeader>
-            <CardTitle className="text-sm font-bold flex items-center gap-2">
-              <UserCog className="size-4.5 text-primary" />
-              <span>User Role Management Console</span>
-            </CardTitle>
-            <CardDescription className="text-[11px]">
-              Lists live registered platform accounts. Admins can update roles (e.g. promoting drivers to FLEET MANAGER).
-            </CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <div className="space-y-1">
+              <CardTitle className="text-sm font-bold flex items-center gap-2">
+                <UserCog className="size-4.5 text-primary" />
+                <span>User Role Management Console</span>
+              </CardTitle>
+              <CardDescription className="text-[11px]">
+                Lists live registered platform accounts. Admins can update roles (e.g. promoting drivers to FLEET MANAGER).
+              </CardDescription>
+            </div>
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+              <DialogTrigger render={
+                <button className="flex items-center gap-1.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-1.5 text-xs font-semibold shadow-sm transition-all cursor-pointer">
+                  <Plus className="size-3.5" />
+                  <span>Create User Account</span>
+                </button>
+              } />
+              <DialogContent className="sm:max-w-[425px] bg-card border border-border">
+                <DialogHeader>
+                  <DialogTitle className="text-base font-bold text-foreground">Create New User Account</DialogTitle>
+                  <DialogDescription className="text-xs text-muted-foreground">
+                    Register a new user account with specified credentials and role.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleRegisterUser} className="space-y-4 py-2">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground" htmlFor="new-user-name">
+                      Full Name
+                    </label>
+                    <input
+                      id="new-user-name"
+                      type="text"
+                      required
+                      value={newUserName}
+                      onChange={(e) => setNewUserName(e.target.value)}
+                      placeholder="e.g. John Doe"
+                      className="w-full rounded-lg border border-border bg-background py-1.5 px-3 text-xs text-foreground outline-none focus:border-primary transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground" htmlFor="new-user-email">
+                      Email Address
+                    </label>
+                    <input
+                      id="new-user-email"
+                      type="email"
+                      required
+                      value={newUserEmail}
+                      onChange={(e) => setNewUserEmail(e.target.value)}
+                      placeholder="e.g. john@company.com"
+                      className="w-full rounded-lg border border-border bg-background py-1.5 px-3 text-xs text-foreground outline-none focus:border-primary transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground" htmlFor="new-user-password">
+                      Password
+                    </label>
+                    <input
+                      id="new-user-password"
+                      type="password"
+                      required
+                      value={newUserPassword}
+                      onChange={(e) => setNewUserPassword(e.target.value)}
+                      placeholder="Min 6 characters"
+                      className="w-full rounded-lg border border-border bg-background py-1.5 px-3 text-xs text-foreground outline-none focus:border-primary transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground" htmlFor="new-user-role">
+                      System Role
+                    </label>
+                    <select
+                      id="new-user-role"
+                      value={newUserRole}
+                      onChange={(e) => {
+                        setNewUserRole(e.target.value as any);
+                        if (e.target.value !== "DRIVER") {
+                          setNewUserDriverId("");
+                        }
+                      }}
+                      className="w-full rounded-lg border border-border bg-background py-1.5 px-3 text-xs text-foreground outline-none focus:border-primary transition-all"
+                    >
+                      <option value="ADMIN">ADMIN</option>
+                      <option value="FLEET_MANAGER">FLEET MANAGER</option>
+                      <option value="SAFETY_OFFICER">SAFETY OFFICER</option>
+                      <option value="DRIVER">DRIVER</option>
+                    </select>
+                  </div>
+
+                  {newUserRole === "DRIVER" && (
+                    <div className="space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground" htmlFor="new-user-driver">
+                        Associate with Driver Profile
+                      </label>
+                      <select
+                        id="new-user-driver"
+                        value={newUserDriverId}
+                        onChange={(e) => setNewUserDriverId(e.target.value)}
+                        className="w-full rounded-lg border border-border bg-background py-1.5 px-3 text-xs text-foreground outline-none focus:border-primary transition-all"
+                      >
+                        <option value="">-- No Association (Unlinked) --</option>
+                        {drivers.map((d) => (
+                          <option key={d._id} value={d._id}>
+                            {d.name} ({d.status})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end gap-2 pt-2">
+                    <DialogClose render={
+                      <button
+                        type="button"
+                        className="rounded-lg border border-border hover:bg-muted text-foreground px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    } />
+                    <button
+                      type="submit"
+                      disabled={isRegistering}
+                      className="rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-1.5 text-xs font-semibold disabled:opacity-50 transition-all cursor-pointer"
+                    >
+                      {isRegistering ? "Creating..." : "Create Account"}
+                    </button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
           </CardHeader>
           <CardContent className="p-0 border-t border-border">
             <table className="w-full text-xs text-left">

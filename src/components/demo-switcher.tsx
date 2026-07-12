@@ -48,7 +48,7 @@ export function DemoSwitcher() {
   useEffect(() => {
     fetchSession();
     // Poll session occasionally or listen to router updates
-    const interval = setInterval(fetchSession, 5000);
+    const interval = setInterval(fetchSession, 30000);
     return () => clearInterval(interval);
   }, []);
 
