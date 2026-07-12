@@ -1,20 +1,21 @@
 # TransitOps: Smart Transport Operations Platform
 > **Hackathon Duration**: 8 Hours (SOLO Execution)  
-> **Tech Stack**: Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui, MongoDB, Mongoose, JWT Cookie Auth
+> **Tech Stack**: Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui, MongoDB, Mongoose, JWT Cookie Auth, MapLibre GL JS, OpenFreeMap
 
-TransitOps is a centralized transport operations platform designed to digitize vehicle registration, driver scheduling, cargo dispatching, compliance audits, workshop maintenance, and operational expense logs. It features four role-based dashboard consoles and strict server-side validation rules.
+TransitOps is a centralized transport operations platform designed to digitize vehicle registration, driver scheduling, cargo dispatching, compliance audits, workshop maintenance, and operational expense logs. It features four role-based dashboard consoles, strict server-side validation rules, and real-time telemetry rendering.
 
 ---
 
 ## Key Features
 
 1. **Role-Based Access Control (RBAC) & Secure JWT Auth**:
-   * Uses HTTP-only cookie-based JWT sessions.
-   * Restricts layout access and endpoints according to roles (`ADMIN`, `FLEET_MANAGER`, `SAFETY_OFFICER`, `DRIVER`).
-   * Implements secure middleware guarding `/dashboard` paths.
+   * Uses HTTP-only cookie-based stateless JWT sessions.
+   * Restricts layout access and API endpoints according to roles (`ADMIN`, `FLEET_MANAGER`, `SAFETY_OFFICER`, `DRIVER`).
+   * Implements secure edge middleware guarding `/dashboard` paths.
+   * Includes an admin control panel allowing dynamic user promotions (e.g. promoting a Driver to `FLEET_MANAGER`).
 
 2. **Floating Demo Switcher Widget**:
-   * A persistent dashboard control console enabling judges to swap roles (`Admin` ⇄ `Fleet Manager` ⇄ `Safety Officer` ⇄ `Driver`) instantly.
+   * A persistent dashboard control console enabling judges to swap roles (`Admin` ⇄ `Fleet Manager` ⇄ `Safety Officer` ⇄ `Driver`) instantly with one click.
    * **Database Reseed & Reset Button**: Drops collections and seeds a preset of vehicles, drivers (including expired license and low safety rating anomalies), and financial logs in under 1 second.
 
 3. **Fleet Manager Workspace**:
@@ -22,14 +23,17 @@ TransitOps is a centralized transport operations platform designed to digitize v
    * Available vehicle/driver select filters enforcing capacity and license compliance.
    * Visual Recharts analytics tracking vehicle return on investment (ROI) and cost segmentations.
    * Instant CSV exporter downloading expense logs.
+   * **Corridor Selection Dispatcher**: Replaced manual text coordinates with a predefined Indian Corridor dropdown (e.g., Delhi ➔ Noida Expressway, Bengaluru ➔ Electronic City) that auto-populates route distance and checkpoints.
 
-4. **Live GPS Operations Map**:
-   * A custom vector SVG map plotting routes (Chicago, Boston, Detroit, NY, Indianapolis, Cleveland).
-   * Interpolates active trip coordinates, sliding truck nodes along active paths in real time.
-   * Avoids external API key failures or script loading blockers.
+4. **Live GPS Operations Map (OSRM & MapLibre)**:
+   * **Locked Dark Map Layout**: Renders vector dark-mode tiles (`https://tiles.openfreemap.org/styles/dark`) via key-free **OpenFreeMap** and **MapLibre GL JS** to give high-contrast visibility to neon route lines.
+   * **Real-Road Routing**: Connects to the **OSRM Directions API** to generate driving paths that follow actual roads, instead of straight lines.
+   * **Dynamic File Cache**: Automatically caches generated routes under `public/routes/*.json` on the first request. Subsequent map loads read directly from the filesystem, ensuring completely offline operations during live demos.
+   * **Simulated Telemetry**: Circle markers pulse and slide along paths using the Haversine formula to maintain constant physical speeds (independent of coordinate density).
+   * **Static Hub & Depot Pins**: Shows administrative buildings (🏢 HQ Office, 🔧 Workshop Yard) with parked vehicle clustering. Stationary vehicles hide driver designations until dispatched.
 
 5. **Driver Mobile Portal**:
-   * Single-column, touch-optimized viewport.
+   * Single-column, touch-optimized mobile viewport.
    * Prompts for odometer and fuel completion logs when a trip is dispatched.
    * Quick expense loggers for tolls and unexpected charges.
 
@@ -37,10 +41,15 @@ TransitOps is a centralized transport operations platform designed to digitize v
    * Lists driver license category audits.
    * Highlights expired credentials in crimson red and soon-to-expire documents in amber yellow.
    * Roster switches for manual suspensions or corrective safety score edits.
+   * Fully resolved redirect loop issues for Safety Officers.
 
 7. **Workshop Maintenance Log**:
    * Places available vehicles in repair workshops (`IN_SHOP`), removing them from driver dispatch pools.
    * Automatically compiles invoice maintenance costs into vehicle expenses upon closure.
+
+8. **Design System & Legibility Scale**:
+   * Utilizes the highly legible `Inter` font mapped to `--font-sans`.
+   * Globally scaled all text sizes by `4px` directly inside the `@theme` css config (base text set to `20px`) to prevent eye fatigue.
 
 ---
 
@@ -54,10 +63,11 @@ TransitOps is a centralized transport operations platform designed to digitize v
 │   │   ├── 📁 vehicles/          # Vehicle CRUD & Detail ROI metrics
 │   │   ├── 📁 drivers/           # Driver profiles & safety score updates
 │   │   ├── 📁 trips/             # Trip Dispatch, Completion, Odometer locks
+│   │   ├── 📁 routes/            # OSRM path cache controller (/api/routes/[id])
 │   │   ├── 📁 maintenance/       # Maintenance work order controllers
 │   │   └── 📁 expenses/          # Direct costs & fuel expense logs
 │   ├── 📁 dashboard/             # Role guarded views
-│   │   ├── 📁 admin/             # Overrides & Reset panel
+│   │   ├── 📁 admin/             # Overrides, user promotions & Reset panel
 │   │   ├── 📁 fleet-manager/     # Registries, Recharts, and Dispatches
 │   │   ├── 📁 safety/            # License checks & safety ratings
 │   │   ├── 📁 driver/            # Mobile console & completion logger
@@ -68,10 +78,11 @@ TransitOps is a centralized transport operations platform designed to digitize v
 ├── 📁 components/
 │   ├── 📁 ui/                    # shadcn/ui primitives
 │   ├── 📄 demo-switcher.tsx      # Floating judge panel
-│   └── 📄 gps-map.tsx            # SVG GPS live route animator
+│   └── 📄 live-fleet-map.tsx     # MapLibre GPS live route animator
 ├── 📁 lib/
-│   ├── 📄 db.ts                  # Persistent Mongoose connection pool
+│   ├── 📄 db.ts                  # Cached Mongoose connection pool
 │   ├── 📄 jwt.ts                 # JWT signing & decoding helpers
+│   ├── 📄 routes-data.ts         # Predefined Indian corridors & hubs
 │   └── 📄 validations.ts         # Shared Zod validation schemas
 └── 📁 models/                    # Mongoose MongoDB models
     ├── 📄 User.ts

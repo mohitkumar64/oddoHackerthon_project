@@ -84,6 +84,19 @@ const getStatusColor = (status: string) => {
 };
 
 export function LiveFleetMap() {
+  // Helper functions to check populated Mongo references safely
+  const matchesVehicle = (trip: any, vehicleId: string) => {
+    if (!trip || !trip.vehicleId) return false;
+    const tVehId = typeof trip.vehicleId === "object" ? trip.vehicleId._id : trip.vehicleId;
+    return tVehId?.toString() === vehicleId.toString();
+  };
+
+  const matchesDriver = (trip: any, driverId: string) => {
+    if (!trip || !trip.driverId) return false;
+    const tDrId = typeof trip.driverId === "object" ? trip.driverId._id : trip.driverId;
+    return tDrId?.toString() === driverId.toString();
+  };
+
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<{ [key: string]: { marker: maplibregl.Marker; data: any } }>({});
@@ -169,8 +182,8 @@ export function LiveFleetMap() {
         const activeList: typeof activeDispatches = [];
         activeVehicles.forEach((vehicle: Vehicle, idx: number) => {
           if (vehicle.status === "ON_TRIP") {
-            const activeTrip = tData.find((t: Trip) => t.vehicleId === vehicle._id && t.status === "DISPATCHED");
-            const assignedDriver = activeTrip ? dData.find((d: Driver) => d._id === activeTrip.driverId) : null;
+            const activeTrip = tData.find((t: Trip) => matchesVehicle(t, vehicle._id) && t.status === "DISPATCHED");
+            const assignedDriver = activeTrip ? dData.find((d: Driver) => matchesDriver(activeTrip, d._id)) : null;
             const driverName = assignedDriver ? assignedDriver.name : "Driver";
             const route = getRouteForVehicle(idx);
 
@@ -279,8 +292,8 @@ export function LiveFleetMap() {
     vehicles.forEach((vehicle, idx) => {
       if (vehicle.status !== "ON_TRIP") return;
 
-      const activeTrip = trips.find(t => t.vehicleId === vehicle._id && t.status === "DISPATCHED");
-      const assignedDriver = activeTrip ? drivers.find(d => d._id === activeTrip.driverId) : null;
+      const activeTrip = trips.find(t => matchesVehicle(t, vehicle._id) && t.status === "DISPATCHED");
+      const assignedDriver = activeTrip ? drivers.find(d => matchesDriver(activeTrip, d._id)) : null;
       const driverName = assignedDriver ? assignedDriver.name : "Driver";
       const driverColor = getDriverColor(driverName);
       const route = getRouteForVehicle(idx);
@@ -328,13 +341,51 @@ export function LiveFleetMap() {
     });
     markersRef.current = {};
 
-    vehicles.forEach((vehicle, idx) => {
-      const activeTrip = trips.find(t => t.vehicleId === vehicle._id && t.status === "DISPATCHED");
-      const assignedDriver = activeTrip 
-        ? drivers.find(d => d._id === activeTrip.driverId) 
-        : drivers[idx % drivers.length];
+    // Render static HQ Office pin
+    const hqEl = document.createElement("div");
+    hqEl.className = "cursor-pointer flex items-center justify-center z-10";
+    hqEl.innerHTML = `
+      <div class="flex items-center justify-center bg-[#18181b] text-white dark:bg-[#ffffff] dark:text-black border border-border rounded px-2 py-0.5 shadow-md font-bold text-[9px] tracking-wider uppercase">
+        🏢 HQ Office
+      </div>
+    `;
+    const hqMarker = new maplibregl.Marker({ element: hqEl })
+      .setLngLat([77.2167, 28.6304])
+      .setPopup(new maplibregl.Popup({ offset: 10, closeButton: false }).setHTML(
+        `<div class="p-2.5 text-foreground bg-card text-xs space-y-1 rounded border border-border">
+          <strong class="text-xs">TransitOps Headquarters</strong>
+          <p class="text-muted-foreground text-[10px]">Central dispatcher office and main vehicle depot.</p>
+         </div>`
+      ))
+      .addTo(map);
+    markersRef.current["hq-office"] = { marker: hqMarker, data: null };
 
-      const driverName = assignedDriver ? assignedDriver.name : "Driver";
+    // Render static Workshop Yard pin
+    const shopEl = document.createElement("div");
+    shopEl.className = "cursor-pointer flex items-center justify-center z-10";
+    shopEl.innerHTML = `
+      <div class="flex items-center justify-center bg-amber-600 text-white border border-border rounded px-2 py-0.5 shadow-md font-bold text-[9px] tracking-wider uppercase">
+        🔧 Workshop
+      </div>
+    `;
+    const shopMarker = new maplibregl.Marker({ element: shopEl })
+      .setLngLat([77.235, 28.615])
+      .setPopup(new maplibregl.Popup({ offset: 10, closeButton: false }).setHTML(
+        `<div class="p-2.5 text-foreground bg-card text-xs space-y-1 rounded border border-border">
+          <strong class="text-xs">Central Maintenance Yard</strong>
+          <p class="text-muted-foreground text-[10px]">Logistics maintenance bays, service yards, and vehicle repairs.</p>
+         </div>`
+      ))
+      .addTo(map);
+    markersRef.current["central-workshop"] = { marker: shopMarker, data: null };
+
+    vehicles.forEach((vehicle, idx) => {
+      const activeTrip = trips.find(t => matchesVehicle(t, vehicle._id) && t.status === "DISPATCHED");
+      const assignedDriver = activeTrip 
+        ? drivers.find(d => matchesDriver(activeTrip, d._id)) 
+        : null;
+
+      const driverName = (vehicle.status === "ON_TRIP" && assignedDriver) ? assignedDriver.name : "";
       const driverColor = getDriverColor(driverName);
       const statusColor = getStatusColor(vehicle.status);
       const route = getRouteForVehicle(idx);
@@ -356,11 +407,24 @@ export function LiveFleetMap() {
         `;
       }
 
-      let initialLngLat: [number, number] = coords[0];
+      let initialLngLat: [number, number] = [77.2167, 28.6304];
 
-      if (vehicle.status === "IN_SHOP") {
-        const endPoint = coords[coords.length - 1];
-        initialLngLat = [endPoint[0] + 0.015, endPoint[1] + 0.015];
+      if (vehicle.status === "AVAILABLE") {
+        // Cluster in a grid around Office HQ
+        const col = idx % 5;
+        const row = Math.floor(idx / 5) % 4;
+        const xOffset = (col - 2) * 0.0016; 
+        const yOffset = (row - 1.5) * 0.0016;
+        initialLngLat = [77.2167 + xOffset, 28.6304 + yOffset];
+      } else if (vehicle.status === "IN_SHOP") {
+        // Cluster in a grid around Maintenance Shop
+        const col = idx % 4;
+        const row = Math.floor(idx / 4) % 4;
+        const xOffset = (col - 1.5) * 0.0013;
+        const yOffset = (row - 1.5) * 0.0013;
+        initialLngLat = [77.235 + xOffset, 28.615 + yOffset];
+      } else if (vehicle.status === "ON_TRIP") {
+        initialLngLat = coords[0];
       }
 
       const baseSpeed = 55 + Math.floor(Math.random() * 20);
@@ -428,10 +492,12 @@ export function LiveFleetMap() {
           <span class="px-1 py-0.5 rounded text-[8px] font-bold border ${badgeColor}">${statusLabel}</span>
         </div>
         <div class="space-y-1 text-[10px]">
-          <div class="flex items-center gap-1.5">
-            <div class="size-1.5 rounded-full" style="background-color: ${driverColor}"></div>
-            <p><span class="text-muted-foreground">Driver:</span> <strong class="text-foreground">${sim.driverName}</strong></p>
-          </div>
+          ${vehicle.status === "ON_TRIP" ? `
+            <div class="flex items-center gap-1.5">
+              <div class="size-1.5 rounded-full" style="background-color: ${driverColor}"></div>
+              <p><span class="text-muted-foreground">Driver:</span> <strong class="text-foreground">${sim.driverName}</strong></p>
+            </div>
+          ` : ""}
           <p class="truncate"><span class="text-muted-foreground">Route:</span> <span class="text-foreground">${sim.route.source} ➔ ${sim.route.destination}</span></p>
           
           ${vehicle.status === "ON_TRIP" ? `
