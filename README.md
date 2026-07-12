@@ -6,6 +6,11 @@ TransitOps is a centralized transport operations platform designed to digitize v
 
 ---
 
+## Image
+
+![image](/public/image.png)
+
+
 ## Key Features
 
 1. **Role-Based Access Control (RBAC) & Secure JWT Auth**:
